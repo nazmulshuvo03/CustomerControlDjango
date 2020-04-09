@@ -1,0 +1,21 @@
+body{
+    background-color: #ebeff5;
+}
+#logo{
+    height: auto;
+    width: 4rem;
+    border-radius: 50%;
+    border-width: 0.5rem;
+    border-color: #ccc;
+    border-style: solid;
+    padding: 0.5rem;
+}
+#total-orders{
+    background-color: #4cb4c7;
+}
+#orders-delivered{
+    background-color: #7abecc;
+}
+#orders-pending{
+    background-color: #7cd1c0;
+}
