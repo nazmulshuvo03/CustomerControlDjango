@@ -1,69 +1,67 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-
 from django.forms import inlineformset_factory
 from django.contrib.auth.forms import UserCreationForm
-
 from django.contrib.auth import authenticate, login, logout
-
 from django.contrib import messages
-
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import Group 
 
 # creating views
 from .models import *
 from .forms import OrderForm, CreateUserForm
 from .filters import OrderFilter
+from .decorators import unauthenticated_user, allowed_users, admin_only
 
 
-def registerPage(req):
-    if req.user.is_authenticated:
-        return redirect('home')
-    else:
-        form = CreateUserForm()
+@unauthenticated_user
+def registerPage(request):
+    form = CreateUserForm()
 
-        if(req.method == "POST"):
-            form = CreateUserForm(req.POST)
-            if form.is_valid():
-                form.save()
+    if(request.method == "POST"):
+        form = CreateUserForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            username = form.cleaned_data.get('username')
 
-                user = form.cleaned_data.get('username')
-                messages.success(req, 'Account created for ' + user)
+            group = Group.objects.get(name="customer")
+            user.groups.add(group)
 
-                return redirect('login')
+            messages.success(request, 'Account created for ' + username)
 
-        context = {'form': form}
+            return redirect('login')
 
-        return render(req, 'accounts/register.html', context)
+    context = {'form': form}
 
-
-def loginPage(req):
-    if req.user.is_authenticated:
-        return redirect('home')
-    else:
-        if (req.method == "POST"):
-            username = req.POST.get('username')
-            password = req.POST.get('password')
-
-            user = authenticate(req, username=username, password=password)
-
-            if user is not None:
-                login(req, user)
-                return redirect('home')
-            else:
-                messages.info(req, 'Username or Password is incorrect')
-
-        context = {}
-        return render(req, 'accounts/login.html', context)
+    return render(request, 'accounts/register.html', context)
 
 
-def logoutUser(req):
-    logout(req)
+@unauthenticated_user
+def loginPage(request):
+    if (request.method == "POST"):
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            login(request, user)
+            return redirect('home')
+        else:
+            messages.info(request, 'Username or Password is incorrect')
+
+    context = {}
+    return render(request, 'accounts/login.html', context)
+
+
+def logoutUser(request):
+    logout(request)
     return redirect('login')
 
 
 @login_required(login_url="login")
-def home(req):
+@admin_only
+def home(request):
     orders = Order.objects.all()
     customers = Customer.objects.all()
 
@@ -75,43 +73,51 @@ def home(req):
     context = {'orders': orders, 'customers': customers, 'total_customers': total_customers,
                'total_orders': total_orders, 'delivered': delivered, 'pending': pending}
 
-    return render(req, 'accounts/dashboard.html', context)
+    return render(request, 'accounts/dashboard.html', context)
+
+
+def userPage(request):
+    context = {}
+    return render(request, 'accounts/user.html', context)
 
 
 @login_required(login_url="login")
-def products(req):
+@allowed_users(allowed_roles=["admin"])
+def products(request):
     products = Product.objects.all()
-    return render(req, 'accounts/products.html', {'products': products})
+    return render(request, 'accounts/products.html', {'products': products})
 
 
 @login_required(login_url="login")
-def customer(req, pk):
+@allowed_users(allowed_roles=["admin"])
+def customer(request, pk):
     customer = Customer.objects.get(id=pk)
 
     orders = customer.order_set.all()
     order_count = orders.count()
 
-    myFilter = OrderFilter(req.GET, queryset=orders)
+    myFilter = OrderFilter(request.GET, queryset=orders)
     orders = myFilter.qs
 
     context = {'customer': customer,
                'orders': orders, 'order_count': order_count, 'myFilter': myFilter}
 
-    return render(req, 'accounts/customer.html', context)
+    return render(request, 'accounts/customer.html', context)
 
 
 @login_required(login_url="login")
-def createOrder(req, pk):
+@allowed_users(allowed_roles=["admin"])
+def createOrder(request, pk):
     OrderFormSet = inlineformset_factory(
         Customer, Order, fields=('product', 'status'), extra=10)
     customer = Customer.objects.get(id=pk)
     # form = OrderForm(initial={'customer': customer})
     formset = OrderFormSet(queryset=Order.objects.none(), instance=customer)
 
-    if req.method == 'POST':
-        # print('Printing POST: ', req.POST)
-        # form = OrderForm(req.POST)
-        formset = OrderFormSet(req.POST, instance=customer)
+    if request.method == 'POST':
+        # print('Printing POST: ', request.POST)
+        # form = OrderForm(request.POST)
+        formset = OrderFormSet(request.POST, instance=customer)
 
         if formset.is_valid():
             formset.save()
@@ -119,33 +125,35 @@ def createOrder(req, pk):
 
     context = {'formset': formset}
 
-    return render(req, 'accounts/order_form.html', context)
+    return render(request, 'accounts/order_form.html', context)
 
 
 @login_required(login_url="login")
-def updateOrder(req, pk):
+@allowed_users(allowed_roles=["admin"])
+def updateOrder(request, pk):
     order = Order.objects.get(id=pk)
     form = OrderForm(instance=order)
 
-    if req.method == 'POST':
-        # print('Printing POST: ', req.POST)
-        form = OrderForm(req.POST, instance=order)
+    if request.method == 'POST':
+        # print('Printing POST: ', request.POST)
+        form = OrderForm(request.POST, instance=order)
         if form.is_valid():
             form.save()
             return redirect('/')
 
     context = {'form': form}
 
-    return render(req, 'accounts/order_form.html', context)
+    return render(request, 'accounts/order_form.html', context)
 
 
 @login_required(login_url="login")
-def deleteOrder(req, pk):
+@allowed_users(allowed_roles=["admin"])
+def deleteOrder(request, pk):
     order = Order.objects.get(id=pk)
 
-    if req.method == "POST":
+    if request.method == "POST":
         order.delete()
         return redirect('/')
 
     context = {'item': order}
-    return render(req, 'accounts/delete.html', context)
+    return render(request, 'accounts/delete.html', context)
