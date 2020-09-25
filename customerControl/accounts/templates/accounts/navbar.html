@@ -1,5 +1,13 @@
 {% load static %}
 
+<style>
+    .hello-msg {
+        font-size: 18px;
+        color: #fff;
+        margin-right: 20px;
+    }
+</style>
+
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <img src="{% static 'images/logo.png' %}" alt="Logo" id="logo" />
     <button
@@ -25,5 +33,12 @@
                 <a class="nav-link" href="http://127.0.0.1:8000/admin">Admin</a>
             </li>
         </ul>
+
+        <div class="ml-auto">
+            <span class="hello-msg">Hello, {{ request.user }}</span>
+            <span>
+                <a class="btn btn-md btn-secondary" href="{% url 'logout' %}">Logout</a>
+            </span>
+        </div>
     </div>
 </nav>
