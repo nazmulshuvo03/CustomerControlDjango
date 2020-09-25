@@ -8,6 +8,8 @@ from django.contrib.auth import authenticate, login, logout
 
 from django.contrib import messages
 
+from django.contrib.auth.decorators import login_required
+
 # creating views
 from .models import *
 from .forms import OrderForm, CreateUserForm
@@ -15,39 +17,44 @@ from .filters import OrderFilter
 
 
 def registerPage(req):
-    form = CreateUserForm()
+    if req.user.is_authenticated:
+        return redirect('home')
+    else:
+        form = CreateUserForm()
 
-    if(req.method == "POST"):
-        form = CreateUserForm(req.POST)
-        if form.is_valid():
-            form.save()
+        if(req.method == "POST"):
+            form = CreateUserForm(req.POST)
+            if form.is_valid():
+                form.save()
 
-            user = form.cleaned_data.get('username')
-            messages.success(req, 'Account created for ' + user)
+                user = form.cleaned_data.get('username')
+                messages.success(req, 'Account created for ' + user)
 
-            return redirect('login')
+                return redirect('login')
 
-    context = {'form': form}
+        context = {'form': form}
 
-    return render(req, 'accounts/register.html', context)
+        return render(req, 'accounts/register.html', context)
 
 
 def loginPage(req):
+    if req.user.is_authenticated:
+        return redirect('home')
+    else:
+        if (req.method == "POST"):
+            username = req.POST.get('username')
+            password = req.POST.get('password')
 
-    if (req.method == "POST"):
-        username = req.POST.get('username')
-        password = req.POST.get('password')
+            user = authenticate(req, username=username, password=password)
 
-        user = authenticate(req, username=username, password=password)
+            if user is not None:
+                login(req, user)
+                return redirect('home')
+            else:
+                messages.info(req, 'Username or Password is incorrect')
 
-        if user is not None:
-            login(req, user)
-            return redirect('home')
-        else:
-            messages.info(req, 'Username or Password is incorrect')
-
-    context = {}
-    return render(req, 'accounts/login.html', context)
+        context = {}
+        return render(req, 'accounts/login.html', context)
 
 
 def logoutUser(req):
@@ -55,6 +62,7 @@ def logoutUser(req):
     return redirect('login')
 
 
+@login_required(login_url="login")
 def home(req):
     orders = Order.objects.all()
     customers = Customer.objects.all()
@@ -70,11 +78,13 @@ def home(req):
     return render(req, 'accounts/dashboard.html', context)
 
 
+@login_required(login_url="login")
 def products(req):
     products = Product.objects.all()
     return render(req, 'accounts/products.html', {'products': products})
 
 
+@login_required(login_url="login")
 def customer(req, pk):
     customer = Customer.objects.get(id=pk)
 
@@ -90,6 +100,7 @@ def customer(req, pk):
     return render(req, 'accounts/customer.html', context)
 
 
+@login_required(login_url="login")
 def createOrder(req, pk):
     OrderFormSet = inlineformset_factory(
         Customer, Order, fields=('product', 'status'), extra=10)
@@ -111,6 +122,7 @@ def createOrder(req, pk):
     return render(req, 'accounts/order_form.html', context)
 
 
+@login_required(login_url="login")
 def updateOrder(req, pk):
     order = Order.objects.get(id=pk)
     form = OrderForm(instance=order)
@@ -127,6 +139,7 @@ def updateOrder(req, pk):
     return render(req, 'accounts/order_form.html', context)
 
 
+@login_required(login_url="login")
 def deleteOrder(req, pk):
     order = Order.objects.get(id=pk)
 
