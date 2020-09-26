@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
+import environ
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -26,6 +27,9 @@ SECRET_KEY = '5!naf_m*#ynl@*#f(3si0z(+@=)a-6wt)g^f!vcpv!bw^t&l@t'
 DEBUG = True
 
 ALLOWED_HOSTS = []
+
+env = environ.Env(DEBUG=(bool, False))
+env.read_env()
 
 
 # Application definition
@@ -130,3 +134,11 @@ STATICFILES_DIRS = [
 ]
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'static/images')
+
+# SMTP Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 465
+EMAIL_USE_TLS = False
+EMAIL_HOST_USER = env("EMAIL_ADDRESS")
+EMAIL_HOST_PASSWORD = env("EMAIL_PASSWORD")
