@@ -24,9 +24,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '5!naf_m*#ynl@*#f(3si0z(+@=)a-6wt)g^f!vcpv!bw^t&l@t'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["customer-control-django.herokuapp.com", '127.0.0.1']
 
 env = environ.Env(DEBUG=(bool, False))
 env.read_env()
@@ -81,14 +81,21 @@ WSGI_APPLICATION = 'customerControl.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'CustomerControlDb',
+#         'USER': 'postgres',
+#         'PASSWORD': 'postgres',
+#         'HOST': 'localhost',
+#         'PORT': '5432'
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'CustomerControlDb',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'localhost',
-        'PORT': '5432'
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
 
@@ -143,6 +150,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'static/images')
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 465
-EMAIL_USE_TLS = False
+EMAIL_USE_TLS = True
 EMAIL_HOST_USER = env("EMAIL_ADDRESS")
 EMAIL_HOST_PASSWORD = env("EMAIL_PASSWORD")
