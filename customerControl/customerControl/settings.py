@@ -28,8 +28,8 @@ DEBUG = False
 
 ALLOWED_HOSTS = ["customer-control-django.herokuapp.com", '127.0.0.1']
 
-env = environ.Env(DEBUG=(bool, False))
-env.read_env()
+# env = environ.Env(DEBUG=(bool, False))
+# env.read_env()
 
 
 # Application definition
@@ -146,10 +146,10 @@ STATICFILES_DIRS = [
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'static/images')
 
-# SMTP Configuration
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 465
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = env("EMAIL_ADDRESS")
-EMAIL_HOST_PASSWORD = env("EMAIL_PASSWORD")
+# # SMTP Configuration
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 465
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = env("EMAIL_ADDRESS")
+# EMAIL_HOST_PASSWORD = env("EMAIL_PASSWORD")
